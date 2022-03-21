@@ -4,6 +4,7 @@
 #define DESENCRY 0
 # include <stdio.h>
 # include <cstring>
+# include <cassert>
 typedef int  INT32;
 typedef char INT8;
 typedef unsigned char  ULONG8;

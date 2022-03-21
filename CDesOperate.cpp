@@ -1,6 +1,7 @@
 #include "CDesOperate.h"
 #include <stdio.h>
 #include <iostream>
+
 CDesOperate::CDesOperate()
 {
     for (int i = 0; i < 16; i++) {
@@ -280,6 +281,7 @@ INT32 CDesOperate::Encry(char* pPlaintext,int nPlaintextLength,char *pCipherBuff
 	if (nCipherBufferLength < nLenthofLong * 4)
 	{//out put buffer is not enough
 		nCipherBufferLength = nLenthofLong * 4;
+        assert (0);
 		return 0;
 	}
 	memset(pCipherBuffer, 0, nCipherBufferLength);
