@@ -14,12 +14,12 @@ int main()
     int nPlaintextLength = sizeof(pPlaintext);
     char *pCipherBuffer=(char*)malloc(80);
     int nCipherBufferLength = 80;
-    char *pKey=(char*)malloc(64);
-    for(int i =0;i<64;++i)
+    char *pKey=(char*)malloc(8);
+    for(int i =0;i<8;++i)
     {
         pKey[i]='a';
     }
-    int nKeyLength =64;
+    int nKeyLength =8;
     cd.Encry(pPlaintext,nPlaintextLength,pCipherBuffer, nCipherBufferLength, pKey,nKeyLength);
     return 0;
 }
