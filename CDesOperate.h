@@ -1,7 +1,9 @@
 #ifndef CDESOPERATE_H
 #define CDESOPERATE_H
 #define SUCCESS 1
-#define DESENCRY 0
+#define FAIL 0
+#define DECRYPT 1
+#define ENCRYPT 0
 # include <stdio.h>
 # include <cstring>
 # include <cassert>

@@ -1,6 +1,7 @@
 #include "CDesOperate.h"
 #include <stdio.h>
 #include <iostream>
+#include <cassert>
 
 CDesOperate::CDesOperate()
 {
@@ -15,11 +16,11 @@ CDesOperate::CDesOperate()
 }
 INT32 CDesOperate::MakeFirstKey(ULONG32* keyP)
 {
-    ULONG32 tempKey[2];
+    ULONG32 tempKey[2]={ 0,0 };
     ULONG32* pFirstKey = (ULONG32*)m_arrBufKey;
     ULONG32* pTempKey = (ULONG32*)tempKey;
     memset((ULONG8*)m_arrBufKey, 0, sizeof(m_arrBufKey));
-    memcpy((ULONG8*)tempKey, (ULONG8*)keyP, 8);
+    memcpy((ULONG8*)&tempKey, (ULONG8*)keyP, 8);
     memset((ULONG8*)m_arrOutKey, 0, sizeof(m_arrOutKey));
     int  j = 0;
     for (j = 0; j < 28; j++) {                                                                                                        //循环28次   64---->56     但还是要用2个32位来存储
@@ -52,9 +53,10 @@ INT32 CDesOperate::MakeFirstKey(ULONG32* keyP)
 
 INT32 CDesOperate::MakeData(ULONG32* left, ULONG32* right, ULONG32 number)
 {
+
     ULONG32 oldRight = *right;
-    ULONG8 useBySBox[8];
-    ULONG32 exdesP[2]; //用于存放拓展后的数据
+    ULONG8 useBySBox[8] = {0};
+    ULONG32 exdesP[2] = {0}; //用于存放拓展后的数据
      //32---->48
     int j = 0;
     for (; j < 48; j++) {                               //只对right做拓展
@@ -74,9 +76,13 @@ INT32 CDesOperate::MakeData(ULONG32* left, ULONG32* right, ULONG32 number)
         }
 
     }
+
+
     for (j = 0; j < 2; j++) {
         exdesP[j] ^= m_arrOutKey[number][j]; //子秘钥参与的异或运算
+
     }
+
     exdesP[1] >>= 8;
     useBySBox[7] = (ULONG8)(exdesP[1] & 0x0000003fL);        //与上00000...00111111  低6位全为1
     exdesP[1] >>= 6;                                         //左移6位
@@ -110,10 +116,12 @@ INT32 CDesOperate::MakeData(ULONG32* left, ULONG32* right, ULONG32 number)
             tempData |= pc_by_bit[j];
         }
     }
+
     *right = tempData;
 
     *right ^= *left;                           //传的是指针 ,用于迭代
     *left = oldRight;
+
     return SUCCESS;
 }
 INT32 CDesOperate::MakeKey(ULONG32* keyleft, ULONG32* keyright, ULONG32 number)
@@ -166,10 +174,10 @@ INT32 CDesOperate::MakeKey(ULONG32* keyleft, ULONG32* keyright, ULONG32 number)
 
 INT32 CDesOperate::HandleData(ULONG32* left, ULONG8 choice)
 {
-	INT32 number = 0, j = 0;
+	int number=0,j = 0;
 	ULONG32* right = &left[1];
 	ULONG32 tmp = 0;
-	ULONG32 tmpbuf[2];
+	ULONG32 tmpbuf[2]={0,0};
 	for (j = 0; j < 64; j++)
 	{
 		if (j < 32)
@@ -207,6 +215,7 @@ INT32 CDesOperate::HandleData(ULONG32* left, ULONG8 choice)
 			}
 		}
 	}
+
 	*left = tmpbuf[0];
 	*right = tmpbuf[1];
     tmpbuf[0] = 0;
@@ -221,6 +230,7 @@ INT32 CDesOperate::HandleData(ULONG32* left, ULONG8 choice)
         for(number = 15;number >=0; --number)
             MakeData(left,right,(ULONG32)number);
     }
+
     ULONG32 temp;
     temp = *left;
     *left = *right;
@@ -262,6 +272,7 @@ INT32 CDesOperate::HandleData(ULONG32* left, ULONG8 choice)
             }
         }
     }
+
     *left = tmpbuf[0];
     *right = tmpbuf[1];
     return SUCCESS;
@@ -276,7 +287,8 @@ INT32 CDesOperate::Encry(char* pPlaintext,int nPlaintextLength,char *pCipherBuff
 	{
 		return 0;
 	}
-	MakeFirstKey((ULONG32*)pKey);
+    MakeFirstKey((ULONG32*)pKey);
+
     int nLenthofLong = ((nPlaintextLength + 7) / 8) * 2;
 	if (nCipherBufferLength < nLenthofLong * 4)
 	{//out put buffer is not enough
@@ -301,7 +313,7 @@ INT32 CDesOperate::Encry(char* pPlaintext,int nPlaintextLength,char *pCipherBuff
 	{
 		gp_msg[0] = pSource[2 * i];
 		gp_msg[1] = pSource[2 * i + 1];
-		HandleData(gp_msg, DESENCRY);
+		HandleData(gp_msg, ENCRYPT);
 		pOutPutSpace[2 * i] = gp_msg[0];
 		pOutPutSpace[2 * i + 1] = gp_msg[1];
 	}
@@ -311,4 +323,36 @@ INT32 CDesOperate::Encry(char* pPlaintext,int nPlaintextLength,char *pCipherBuff
 	}
 
 	return SUCCESS;
+}
+
+INT32 CDesOperate::Decry(char* pCipher, int nCipherBufferLength, char* pPlaintextBuffer, int& nPlaintextBufferLength, char* pKey, int nKeyLength) {
+    if (nCipherBufferLength % 8 != 0)
+    {
+        return FAIL;
+    }
+    if (nPlaintextBufferLength < nCipherBufferLength)            //与加密过程类似,不必多说
+    {
+        assert (0);
+        return FAIL;
+    }
+    if (nKeyLength != 8)
+    {
+        return FAIL;
+    }
+    MakeFirstKey((ULONG32*)pKey);
+
+    
+    memset(pPlaintextBuffer, 0, nPlaintextBufferLength);
+    ULONG32* pSouce = (ULONG32*)pCipher;
+    ULONG32* pDest = (ULONG32*)pPlaintextBuffer;
+    ULONG32 gp_msg[2] = { 0,0 };
+    for (int i = 0; i < (nCipherBufferLength / 8); i++)
+    {
+        gp_msg[0] = pSouce[2 * i];
+        gp_msg[1] = pSouce[2 * i + 1];
+        HandleData(gp_msg, DECRYPT);
+        pDest[2 * i] = gp_msg[0];
+        pDest[2 * i + 1] = gp_msg[1];
+    }
+    return SUCCESS;
 }
