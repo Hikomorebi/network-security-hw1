@@ -21,19 +21,21 @@ char strStdinBuffer[BUFFERSIZE];
 char strSocketBuffer[BUFFERSIZE];
 char strEncryBuffer[BUFFERSIZE];
 char strDecryBuffer[BUFFERSIZE];
-ssize_t totalRecv(int s, void* buf, size_t len, int flags) {
+ssize_t totalRecv(int s, void *buf, size_t len, int flags)
+{
     size_t nCurSize = 0;
-    while (nCurSize < len) {
-        ssize_t nRes = recv(s, (char*)buf + nCurSize, len - nCurSize, flags);
-        if (nRes<0 || nRes + nCurSize>len) {
+    while (nCurSize < len)
+    {
+        ssize_t nRes = recv(s, (char *)buf + nCurSize, len - nCurSize, flags);
+        if (nRes < 0 || nRes + nCurSize > len)
+        {
             return -1;
         }
         nCurSize += nRes;
     }
     return nCurSize;
-
 }
-void safeChat(int nSock, char* pRemoteName, char* pKey)
+void SecretChat(int nSock, char *pRemoteName, char *pKey)
 {
     CDesOperate cDes;
     if (strlen(pKey) != 8)
@@ -43,7 +45,7 @@ void safeChat(int nSock, char* pRemoteName, char* pKey)
     }
     pid_t nPid;
     nPid = fork();
-    if (nPid != 0)                     //子线程用于接受信息
+    if (nPid != 0) //子线程用于接受信息
     {
         while (1)
         {
@@ -71,14 +73,14 @@ void safeChat(int nSock, char* pRemoteName, char* pKey)
             }
         }
     }
-    else                                                                                                               //父线程发送消息
+    else
     {
         while (1)
         {
-            bzero(&strStdinBuffer, BUFFERSIZE);
+            memset(&strStdinBuffer, 0, BUFFERSIZE);
             while (strStdinBuffer[0] == 0)
             {
-                if (fgets(strStdinBuffer, BUFFERSIZE, stdin) == NULL)                      //读取一行
+                if (fgets(strStdinBuffer, BUFFERSIZE, stdin) == NULL)
                 {
                     continue;
                 }
@@ -101,12 +103,12 @@ void safeChat(int nSock, char* pRemoteName, char* pKey)
         }
     }
 }
-int main(int argc, char* [])
+int main(int argc, char *[])
 {
     printf("Client or Server?\r\n");
     cin >> strStdinBuffer;
     if (strStdinBuffer[0] == 'c' || strStdinBuffer[0] == 'C')
-    {//be a client
+    {
         char strIpAddr[16];
         printf("Please input the server address:\r\n");
         cin >> strIpAddr;
@@ -117,12 +119,11 @@ int main(int argc, char* [])
             perror("Socket");
             exit(errno);
         }
-        bzero(&sDestAddr, sizeof(sDestAddr));
+        memset(&sDestAddr, 0, sizeof(sDestAddr));
         sDestAddr.sin_family = AF_INET;
         sDestAddr.sin_port = htons(SERVERPORT);
         sDestAddr.sin_addr.s_addr = inet_addr(strIpAddr);
-        /* 连接服务器 */
-        if (connect(nConnectSocket, (struct sockaddr*)&sDestAddr, sizeof(sDestAddr)) != 0)
+        if (connect(nConnectSocket, (struct sockaddr *)&sDestAddr, sizeof(sDestAddr)) != 0)
         {
             perror("Connect ");
             exit(errno);
@@ -130,12 +131,12 @@ int main(int argc, char* [])
         else
         {
             printf("Connect Success!  \nBegin to chat...\n");
-            safeChat(nConnectSocket, strIpAddr, "abcdefgh");
+            SecretChat(nConnectSocket, strIpAddr, "abcdefgh");
         }
         close(nConnectSocket);
     }
     else
-    {//be a server
+    {
         int nListenSocket, nAcceptSocket;
         socklen_t nLength = 0;
         struct sockaddr_in sLocalAddr, sRemoteAddr;
@@ -145,12 +146,12 @@ int main(int argc, char* [])
             exit(1);
         }
 
-        bzero(&sLocalAddr, sizeof(sLocalAddr));
-        sLocalAddr.sin_family = PF_INET;
+        memset(&sLocalAddr, 0, sizeof(sLocalAddr));
+        sLocalAddr.sin_family = AF_INET;
         sLocalAddr.sin_port = htons(SERVERPORT);
         sLocalAddr.sin_addr.s_addr = INADDR_ANY;
 
-        if (bind(nListenSocket, (struct sockaddr*)&sLocalAddr, sizeof(struct sockaddr)) == -1)
+        if (bind(nListenSocket, (struct sockaddr *)&sLocalAddr, sizeof(struct sockaddr)) == -1)
         {
             perror("bind");
             exit(1);
@@ -162,7 +163,7 @@ int main(int argc, char* [])
         }
         printf("Listening...\n");
         nLength = sizeof(struct sockaddr);
-        if ((nAcceptSocket = accept(nListenSocket, (struct sockaddr*)&sRemoteAddr, &nLength)) == -1)
+        if ((nAcceptSocket = accept(nListenSocket, (struct sockaddr *)&sRemoteAddr, &nLength)) == -1)
         {
             perror("accept");
             exit(errno);
@@ -171,7 +172,7 @@ int main(int argc, char* [])
         {
             close(nListenSocket);
             printf("server: got connection from %s, port %d, socket %d\n", inet_ntoa(sRemoteAddr.sin_addr), ntohs(sRemoteAddr.sin_port), nAcceptSocket);
-            safeChat(nAcceptSocket, inet_ntoa(sRemoteAddr.sin_addr), "abcdefgh");
+            SecretChat(nAcceptSocket, inet_ntoa(sRemoteAddr.sin_addr), "abcdefgh");
             close(nAcceptSocket);
         }
     }
