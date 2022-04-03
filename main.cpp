@@ -15,7 +15,7 @@
 #include <sys/ioctl.h>
 #include "CDesOperate.h"
 using namespace std;
-#define SERVERPORT 3333
+#define SERVERPORT 12345
 #define BUFFERSIZE 64
 char strStdinBuffer[BUFFERSIZE];
 char strSocketBuffer[BUFFERSIZE];

@@ -23,18 +23,19 @@ INT32 CDesOperate::MakeFirstKey(ULONG32 *keyP)
     ULONG32 *pFirstKey = (ULONG32 *)m_arrBufKey;
     ULONG32 *pTempKey = (ULONG32 *)tempKey;
     memset((ULONG8 *)m_arrBufKey, 0, sizeof(m_arrBufKey));
-    memcpy((ULONG8 *)&tempKey, (ULONG8 *)keyP, 8);
+    memcpy((ULONG8 *)tempKey, (ULONG8 *)keyP, 8);
     memset((ULONG8 *)m_arrOutKey, 0, sizeof(m_arrOutKey));
     int j = 0;
     for (j = 0; j < 28; j++)
-    { //循环28次   64---->56     但还是要用2个32位来存储
+    {
         if (keyleft[j] > 32)
-        { //第一个32位
+        {
             if (pTempKey[1] & pc_by_bit[keyleft[j] - 1])
-            {                                 //第一次出现这种pc_by_bit[],此后涉及到选取特定的位都将用到
-                pFirstKey[0] |= pc_by_bit[j]; //其实原理很简单  先判断一下要选取的bit数组对应的位是否为1
-            }                                 //通过与上0x80000000(1000 0000 0000 0000...)等只有一bit为1的数即可判断
-        }                                     //再将相应的位 置1通过或上0x80000000(1000 0000 0000 0000...)等只有一bit为1的数即可
+            {
+                pFirstKey[0] |= pc_by_bit[j];
+            }
+
+        }
         else
         {
             if (pTempKey[0] & pc_by_bit[keyleft[j] - 1])
@@ -43,7 +44,7 @@ INT32 CDesOperate::MakeFirstKey(ULONG32 *keyP)
             }
         }
         if (keyright[j] > 32)
-        { //第二个32位
+        {
             if (pTempKey[1] & pc_by_bit[keyright[j] - 1])
             {
                 pFirstKey[1] |= pc_by_bit[j];
@@ -57,6 +58,7 @@ INT32 CDesOperate::MakeFirstKey(ULONG32 *keyP)
             }
         }
     }
+
     for (j = 0; j < 16; j++)
     {
         MakeKey(&pFirstKey[0], &pFirstKey[1], j);
@@ -129,6 +131,7 @@ INT32 CDesOperate::MakeData(ULONG32 *left, ULONG32 *right, ULONG32 number)
     *right = tempData;
     *right ^= *left;
     *left = oldRight;
+
     return SUCCESS;
 }
 INT32 CDesOperate::MakeKey(ULONG32 *keyleft, ULONG32 *keyright, ULONG32 number)
@@ -168,9 +171,9 @@ INT32 CDesOperate::MakeKey(ULONG32 *keyleft, ULONG32 *keyright, ULONG32 number)
                 Poutkey[0] |= pc_by_bit[j];
             }
         }
-        else /*j>=24*/
+        else
         {
-            if (*keyright & pc_by_bit[(keychoose[j] - 28)])
+            if (*keyright & pc_by_bit[(keychoose[j] - 29)])
             {
                 Poutkey[1] |= pc_by_bit[j - 24];
             }
